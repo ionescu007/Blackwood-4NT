@@ -59,7 +59,7 @@ The format of this field, for a Windows-based request, is constructed as follows
 | `APP_BUNDLE_ID` | Requesting Application Bundle Identifier | Depends on application |
 | `APP_VERSION` | Requesting Application Version | Depends on application -- obtained from `GetFileVersionInfo` API |
 
-Note that due to Apple's own applications not correctly using a (manifest file)[https://docs.microsoft.com/en-us/windows/win32/sysinfo/targeting-your-application-at-windows-8-1], the OS Version APIs that they use will always end up returning Windows Vista information.
+Note that due to Apple's own applications not correctly using a [https://docs.microsoft.com/en-us/windows/win32/sysinfo/targeting-your-application-at-windows-8-1](manifest file), the OS Version APIs that they use will always end up returning Windows Vista information.
 
 Therefore, a fully constructed field typically looks as such:
  
@@ -67,7 +67,86 @@ Therefore, a fully constructed field typically looks as such:
  
 ##### MobileMe Device Identifier
 
+The device identifier is made up of the following pieces of information, hashed with MD5 according to the information shown below.
+
+| Header | Description | Usage |
+| --- | --- |  --- |
+| `Ethernet MAC` | MAC Address of the first NIC | See below for more information |
+| `Volume Serial Number` | Serial number of the `C:` volume | See below for more information |
+| `Product ID` | Windows Product ID | See below for more information |
+| `CPU Name` | Vendor Name for the Primary CPU | See below for more information |
+| `BIOS Version` | Version  String of the System BIOS | See below for more information |
+| `Machine Name` | Computer Name | See below for more information |
+| `Hardware Profile GUID` | GUID of the current hardware profile | See below for more information |
+
+For each of these 7 hashes, the first 32-bits are taken and converted to an upper-cased hex string, which is zero-extended to 8 digits.
+Each hex string is then concatenated into a period ("`.`") separated string:
+
+`EEEEEEEE.VVVVVVVV.PPPPPPPP.CCCCCCCC.BBBBBBBB.MMMMMMMM.HHHHHHHH`
+
+###### Ethernet MAC
+
+Obtained by calling `GetAdaptersAddresses` and performing the MD5 hash of the first returned MAC address.
+
+###### Volume Serial Number
+
+Obtained by calling `GetVolumeInformationW` and performing the MD5 hash of the first four bytes. Note that it is critical to use the UTF-16LE result, and only take 4 bytes (2 characters).
+
+###### Product ID
+
+Obtained by reading the `ProductId` value under the `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion` registry key and performing the MD5 hash of all bytes. Note that it is critical to use the ASCII result (`RegQueryValueExA`) and hash all of the bytes in the value.
+
+Interestingly, some of Apple's services are still only x86, and therefore run under `WOW64` on 64-bit Windows systems, and access the "virtualized" redirected version of the `SOFTWARE` hive, which does not contain this information, so the hash will be all zeroes.
+
+###### CPU Name
+
+Obtained by reading the `ProcessorNameString` value under the `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0` registry key and performing the MD5 hash of all bytes. Note that it is critical to use the ASCII result (`RegQueryValueExA`) and hash all of the bytes in the value.
+
+###### BIOS Version
+
+Obtained by reading the `SystemBiosVersion` value under the `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System` registry key and performing the MD5 hash of all bytes. Note that it is critical to use the ASCII result (`RegQueryValueExA`) and hash all of the bytes in the value.
+
+###### Machine Name
+
+Obtained by calling `GetComputerNameW` and performing the MD5 hash of the resulting bytes. Note that it is critical to use the UTF-16LE result, and take all returned bytes.
+
+###### Hardware Profile GUID
+
+Obtained by calling `GetCurrentHwProfileW` and performing the MD5 hash of the GUID string returned in `szHwProfileGuid`. Note that it is critical to use the UTF-16LE result, and take all returned bytes.
+
 ##### MobileMe Legacy Device Identifier
+
+The legacy device identifier is made up of the following pieces of information, hashed with MD5 according to the information shown below.
+Pay close attention in how they differ to the non-legacy versions above.
+
+| Header | Description | Usage |
+| --- | --- |  --- |
+| `Volume Serial Number` | Serial number of the `C:` volume | See below for more information |
+| `BIOS Version` | Version  String of the System BIOS | See below for more information |
+| `CPU Name` | Vendor Name for the Primary CPU | See below for more information |
+| `Product ID` | Windows Product ID | See below for more information |
+
+First, the ASCII string `cache-control` is hashed, followed by the ASCII string `Ethernet`.
+Then, for each of these 4 hashes, the first 32-bits are taken and converted to an lower-cased hex string, which is zero-extended to 8 digits.
+Each hex string is then concatenated without any separation:
+
+`EEEEEEEEVVVVVVVVBBBBBBBBCCCCCCCCPPPPPPPP`
+
+###### Volume Serial Number
+
+This is computed in the same way as the non-legacy hash.
+
+###### BIOS Version
+
+Obtained by reading the `SystemBiosVersion` value under the `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System` registry key and performing the MD5 hash of all bytes. Note that it is critical to use the UTF-16LE result (`RegQueryValueExW`) and hash all of the bytes in the value.
+
+###### CPU Name
+
+Obtained by reading the `ProcessorNameString` value under the `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0` registry key and performing the MD5 hash of all bytes. Note that it is critical to use the UTF-16LE result (`RegQueryValueExW`) and hash all of the bytes in the value.
+
+###### Product ID
+
+This is computed in the same way as the non-legacy hash.
 
 #### Anisette HTTP Headers
 
