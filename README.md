@@ -37,9 +37,34 @@ Because a strong design goal was the avoidance of complex or non-Windows friendl
 | `X-Mme-Client-Info` | MobileMe Client Information | See below for format |
 | `X-Mme-Device-Id` | MobileMe Device Identifier | See below for format |
 | `X-Mme-Legacy-Device-Id` | MobileMe Device Identifier | See below for format
+| `X-Mme-Country` | MobileMe Country Identifier | Standard ISO Country Code (`US`)
+| `Accept-Language` | Language Identifier | Standard ISO Language Identifier (`en`)
 
 ##### MobileMe Client Information
 
+The format of this field, for a Windows-based request, is constructed as follows:
+
+`<PC> <%OS%;%MAJOR%.%MINOR%(%SPMAJOR%,%SPMINOR%);%BUILD%> <%AUTHKIT_BUNDLE_ID%/%AUTHKIT_VERSION% (%APP_BUNDLE_ID%/%APP_VERSION%)>`
+ 
+ | Identifier | Description | Usage |
+| --- | --- |  --- |
+| `OS` | OS Identifier | Set to Windows |
+| `MAJOR` | OS Major Version | Returned from OS Version API |
+| `MINOR` | OS Minor Version | Returned from OS Version API |
+| `SPMAJOR` | OS Service Pack Major Version | Returned from OS Version API |
+| `SPMINOR` | OS Service Pack Minor Version | Returned from OS Version API |
+| `BUILD` | OS Build Number | Returned from OS Version API |
+| `AUTHKIT_BUNDLE_ID` | AuthKit Bundle Identifier | Always `com.apple.AuthKitWin` |
+| `AUTHKIT_VERSION` | AuthKit Version | Always `1` |
+| `APP_BUNDLE_ID` | Requesting Application Bundle Identifier | Depends on application |
+| `APP_VERSION` | Requesting Application Version | Depends on application -- obtained from `GetFileVersionInfo` API |
+
+Note that due to Apple's own applications not correctly using a (manifest file)[https://docs.microsoft.com/en-us/windows/win32/sysinfo/targeting-your-application-at-windows-8-1], the OS Version APIs that they use will always end up returning Windows Vista information.
+
+Therefore, a fully constructed field typically looks as such:
+ 
+`<PC> <Windows;6.2(0,0);9200> <com.apple.AuthKitWin/1 (com.apple.iCloud/7.21)>`
+ 
 ##### MobileMe Device Identifier
 
 ##### MobileMe Legacy Device Identifier
