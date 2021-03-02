@@ -30,6 +30,39 @@ Because a strong design goal was the avoidance of complex or non-Windows friendl
 
 `https://gsa.apple.com/grandslam/GsService2`
 
+#### Regular HTTP Headers
+
+| Header | Description | Usage |
+| --- | --- |  --- |
+| `X-Mme-Client-Info` | MobileMe Client Information | See below for format |
+| `X-Mme-Device-Id` | MobileMe Device Identifier | See below for format |
+| `X-Mme-Legacy-Device-Id` | MobileMe Device Identifier | See below for format
+
+##### MobileMe Client Information
+
+##### MobileMe Device Identifier
+
+##### MobileMe Legacy Device Identifier
+
+#### Anisette HTTP Headers
+
+| Header | Description | Usage |
+| --- | --- |  --- |
+| `X-Apple-I-MD-LU` | Machine Data, Local UUID | See below for description |
+| `X-Apple-I-MD` | Machine Data, One Time Password (OTP) | See below for description |
+| `X-Apple-I-MD-M` | Machine Data, Machine Information | See below for format
+| `X-Apple-I-MD-RINFO` | Machine Data, Routing Information | Obtained after MID Provisionning
+
+##### Local UUID
+
+##### OTP
+
+##### Machine Information
+
+### API Operations
+
+#### Machine Provision
+
 #### Lookup
 
 #### Authenticate (Init Stage)
