@@ -26,7 +26,49 @@ Because a strong design goal was the avoidance of complex or non-Windows friendl
 
 ## Technical Architecture & Design
 
+### API Endpoint
+
+`https://gsa.apple.com/grandslam/GsService2`
+
+#### Lookup
+
+#### Authenticate (Init Stage)
+
+##### Top Level Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Header` | API Header | Used to identify version |
+| `Request` | API Payload | Used to store the request |
+
+##### Header Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Version` | Version String | Set to `1.0.1` |
+
+##### Request Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `A2k` | Client Public Key (`A2` Key) | Computed according to `SRP-6a` standard |
+| `cpd` | Client Provided Data | Anisette headers for client identification |
+| `o` | Operation | Set to `init` for this stage |
+| `ps` | Protocols Supported | See table below |
+| `u` | Username | Account e-mail |
+
+###### Protocols Supported
+
+| Type | Description | Usage |
+| --- | --- |  --- |
+| `s2k` | Standard | Password is sent as SHA-256 digest |
+| `s2k_fo` | API Payload | Password is sent as UTF-8 Hex String of SHA-256 digest |
+
+#### Validate
+
 ## Credits / Thanks
+
+
 
 ## Usage
 
