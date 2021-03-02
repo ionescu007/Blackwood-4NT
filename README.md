@@ -169,7 +169,7 @@ This is computed in the same way as the non-legacy hash.
 
 #### Lookup
 
-#### Authenticate (Init Stage)
+#### Authenticate Request (Init Stage)
 
 ##### Top Level Keys
 
@@ -200,6 +200,87 @@ This is computed in the same way as the non-legacy hash.
 | --- | --- |  --- |
 | `s2k` | Standard | Password is sent as SHA-256 digest |
 | `s2k_fo` | API Payload | Password is sent as UTF-8 Hex String of SHA-256 digest |
+
+#### Authenticate Response (Init Stage)
+
+##### Top Level Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Header` | API Header | Empty |
+| `Response` | API Payload | Used to store the response |
+
+##### Response Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Status` | Response Status | Used to store the response status |
+| `i` | Iterations | Iteration count for `PBKDF2` password derivation, must be > 999 |
+| `s` | Salt | User's unique salt, used for further `SRP-6a` challenges |
+| `sp` | Selected Protocol | Protocol, from table above, the server wishes to use |
+| `c` | Cookie | Unique identification cookie for further API requests |
+| `B` | Server Public Key (`B` Key) | To be used according to `SRP-6a` standard |
+
+##### Status Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `hsc` | HTTP Status Code | HTTP-compatible status code |
+| `ed` | Error Description | GSA-specific error description |
+| `ec` | Error Code | GSA-specific error code |
+| `em` | Error Message | GSA-specific error message |
+
+###### Status Codes
+
+| Code | Description | Usage |
+| --- | --- |  --- |
+| `409` | Conflict | xxx |
+| `200` | OK | Request accepted |
+| `434` | Requested host unavailable | Anisette headers have expired |
+| `421` | xx | xxx |
+
+#### Authenticate Request (Complete Stage)
+
+##### Top Level Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Header` | API Header | Used to identify version |
+| `Request` | API Payload | Used to store the request |
+
+##### Header Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Version` | Version String | Set to `1.0.1` |
+
+##### Request Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `M1` | Client Proof (`M1` Hash) | Computed according to `SRP-6a` standard, with variation described below |
+| `cpd` | Client Provided Data | Anisette headers for client identification |
+| `o` | Operation | Set to `complete` for this stage |
+| `sc` | Server Certificate | SHA-256 digest of SSL certificate chain |
+| `u` | Username | Account e-mail |
+
+#### Authenticate Response (Complete Stage)
+
+##### Top Level Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Header` | API Header | Empty |
+| `Response` | API Payload | Used to store the response |
+
+##### Response Keys
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `Status` | Response Status | Used to store the response status |
+| `spd` | Server Provided Data | User token information, AES-CBC encrypted using session key |
+| `M2` | Server Proof (`M2` Hash) | Used to verify server also has correct password |
+| `np` | Negociation Proof | Used to verify both client and server used the same protocol settings |
 
 #### Validate
 
