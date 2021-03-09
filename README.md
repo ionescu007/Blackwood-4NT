@@ -307,7 +307,25 @@ This is computed in the same way as the non-legacy hash.
 
 #### Validate
 
+#### Check-in (Post Data)
+
 #### Obtain Application Tokens
+
+### Authenticated API Requests
+
+#### Master Token (GS)
+
+`GsIdmsToken` `com.apple.gs.appleid.auth`
+
+Geneaate the `X-Apple-Identity-Token`
+
+#### Password Equivalent Token (PET)
+
+`X-Apple-PE-Token` (`com.apple.gs.idms.pet`)
+
+#### Heart Beat Token
+
+`X-Apple-HB-Token` (`com.apple.gs.idms.hb`)
 
 ### Anisette Protocol Operations
 
