@@ -321,8 +321,8 @@ Anisette supports the following commands which are relevant to GSA. The `pastis`
 | `startProvisioning` | `ADIProvisioningStart` | Consumes the Server Provisioning Intermediate Metadata (SPIM) to return a Client PIM (CPIM) and session ID |
 | `endProvisioning` | | `ADIProvisioningEnd` | Accepts the server's Persistent Token Metadata (PTM) and Trust Key (TK) and writes provisioning data to disk |
 | `destroyProvisioningSession` | | `ADIProvisioningDestroy` | Accepts a previously returned session ID to complete (or abort) a provisoning operation |
-| `eraseProvisioning` | | `ADIProvisioningErase` | Erases provisoned data from disk and restores back to provisioned state |
-| `synchronize` | | `ADISynchronize` | Consumes the Server Intermediate Metadata (SIM) to generate a Synchronization Resume Metadata (SRM) for the MID |
+| `eraseProvisioning` | `ADIProvisioningErase` | Erases provisoned data from disk and restores back to provisioned state |
+| `synchronize` | `ADISynchronize` | Consumes the Server Intermediate Metadata (SIM) to generate a Synchronization Resume Metadata (SRM) for the MID |
 
 The name ADI refers to the Apple Device Information library (`CoreADI`), which must be loaded by `ADILoadLibraryWithPath` from the registry location specified in the `InstallDir` value of the `"HKEY_LOCAL_MACHINE\SOFTWARE\Apple Inc.\Apple Application Support` key. Both a WOW64 (x86) (`CoreADI.dll`) and native x64 (`CoreADI64.dll`) version exists. This library implements all of the required functionality described by the functions above.
 
