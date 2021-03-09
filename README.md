@@ -307,6 +307,8 @@ This is computed in the same way as the non-legacy hash.
 
 #### Validate
 
+#### Obtain Application Tokens
+
 ### Anisette Protocol Operations
 
 Anisette supports the following commands which are relevant to GSA. The `pastis` library in `Blackwood 4NT` takes care of implementing these Anisette requests.
@@ -331,7 +333,7 @@ The export `cvu8io98wun` is used to obtain the initial version and protocol data
 The legacy implementation of Anisette returned per-DSID information in a manual fashion, and almost each of these API required the DSID of the user. The newer implementations are DSID-agnostic, and instead require an Environment ID. The following 4 are defined:
 
 | Environment | Value | Meaning | Endpoint URL Prefix |
-| --- | --- |  --- |
+| --- | --- |  --- | --- |
 | IdMS | `-2` | Production | https://gsa |
 | IdMS1 | `-3` | User Acceptance Testing (UAT) | https://grandslam-uat |
 | IdMS2 | `-4` | QA | https://grandslam-it |
@@ -385,3 +387,5 @@ To actually figure out how Apple's `SRP-6a` implementation is slightly tweaked, 
 This library was developed for research and educational purposes as a personal project to better understand cryptography and modern authentication protocols. Every acronym in this library was new to me at the time of development, and as such, there are likely subtle bugs in the implementation that may arise in corner cases. Additionally, there are a number of subtle naming puns scattered throughout (including, incidentally, the very name of the library).
 
 There are obviously mainly potential uses for authenticating with GSA outside of the standard supported tools. My own interest was API automation of certain utilities for personal use, but, as the linked projects above suggest, this capability can also be used for alternative stores/side-loading, "forensics", and more. I do not condone or support any specific use for this library, and instead want to offer a repository of knowledge instead of the 3 random pieces of Objective-C floating around.
+
+Please do not contact me for information on FairPlay DRM or the underlying algorithm of the OTP and MID, as successful cloning of this data would allow arbitrary machines to appear "trusted" to HSA 2.0, hence avoiding the two-factor authentication mechanism for a targeted user (whose password would still have to be known). This outcome would be unfortunate.
