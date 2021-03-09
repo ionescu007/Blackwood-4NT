@@ -26,6 +26,11 @@ Because a strong design goal was the avoidance of complex or non-Windows friendl
 
 ## Technical Architecture & Design
 
+### Useful Acronyms
+
+* MMe - MobileMe, the old name for iCloud
+* IdMS - Identity Management Services, the team and services at Apple that manage identity (Apple ID)
+
 ### API Endpoint
 
 `https://gsa.apple.com/grandslam/GsService2`
@@ -159,15 +164,19 @@ This is computed in the same way as the non-legacy hash.
 
 ##### Local UUID
 
-##### OTP
-
 ##### Machine Information
+
+##### OTP
 
 ### API Operations
 
-#### Machine Provision
+#### Machine Provision Start
 
-#### Lookup
+#### Machine Provision Complete
+
+#### Machine Sync
+
+#### Bag URL Lookup
 
 #### Authenticate Request (Init Stage)
 
@@ -234,10 +243,10 @@ This is computed in the same way as the non-legacy hash.
 
 | Code | Description | Usage |
 | --- | --- |  --- |
-| `409` | Conflict | xxx |
 | `200` | OK | Request accepted |
-| `434` | Requested host unavailable | Anisette headers have expired |
-| `421` | xx | xxx |
+| `409` | Secondary Action Required | Secondary authentication (2FA) is required |
+| `434` | Anisette Resync Required | Anisette headers have expired |
+| `433` | Anisette Reprovision Required | Anisette machine data has changed |
 
 #### Authenticate Request (Complete Stage)
 
@@ -260,6 +269,7 @@ This is computed in the same way as the non-legacy hash.
 | --- | --- |  --- |
 | `M1` | Client Proof (`M1` Hash) | Computed according to `SRP-6a` standard, with variation described below |
 | `cpd` | Client Provided Data | Anisette headers for client identification |
+| `c` | Cookie | Unique identification cookie from initial API request |
 | `o` | Operation | Set to `complete` for this stage |
 | `sc` | Server Certificate | SHA-256 digest of SSL certificate chain |
 | `u` | Username | Account e-mail |
@@ -273,7 +283,7 @@ This is computed in the same way as the non-legacy hash.
 | `Header` | API Header | Empty |
 | `Response` | API Payload | Used to store the response |
 
-##### Response Keys
+##### Response Keys (Success)
 
 | Field | Description | Usage |
 | --- | --- |  --- |
@@ -282,12 +292,96 @@ This is computed in the same way as the non-legacy hash.
 | `M2` | Server Proof (`M2` Hash) | Used to verify server also has correct password |
 | `np` | Negociation Proof | Used to verify both client and server used the same protocol settings |
 
+##### Response Keys (Resync Required)
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `X-Apple-I-MD-DATA` | Server Intermediate Data | SIM to use for resynchronizing with Anisette |
+
+##### Response Keys (2FA Needed)
+
+| Field | Description | Usage |
+| --- | --- |  --- |
+| `X-Apple-I-MD-Cmd-Target` | Target verifier | Used to select native vs server-driven |
+| `au` | Authentication URL | If server-driven, URL of 2FA capture page |
+
 #### Validate
+
+### Anisette Protocol Operations
+
+Anisette supports the following commands which are relevant to GSA. The `pastis` library in `Blackwood 4NT` takes care of implementing these Anisette requests.
+
+| Function | Internal Name | Usage |
+| --- | --- |  --- |
+| `getIDMSRoutingInfo` | `ADIGetIDMSRouting` | Returns the `X-APPLE-MD-R-INFO` key returned from the provisioning service |
+| `setIDMSRoutingInfo` | `ADISetIDMSRouting` | Persists the value of `X-APPLE-MD-R-INFO` after completion of machine provisioning |
+| `requestOTP` | `ADIOTPRequest` | Returns the MID (Machine Identifier) and OTP (One Time Password / Login Code) |
+| `dispose` | `ADIDispose` | Frees any buffers allocated by CoreADI on its heap |
+| `isMachineProvisioned` | `ADIGetLoginCode` | Returns whether or not provisioning information was cached on the machine |
+| `startProvisioning` | `ADIProvisioningStart` | Consumes the Server Provisioning Intermediate Metadata (SPIM) to return a Client PIM (CPIM) and session ID |
+| `endProvisioning` | | `ADIProvisioningEnd` | Accepts the server's Persistent Token Metadata (PTM) and Trust Key (TK) and writes provisioning data to disk |
+| `destroyProvisioningSession` | | `ADIProvisioningDestroy` | Accepts a previously returned session ID to complete (or abort) a provisoning operation |
+| `eraseProvisioning` | | `ADIProvisioningErase` | Erases provisoned data from disk and restores back to provisioned state |
+| `synchronize` | | `ADISynchronize` | Consumes the Server Intermediate Metadata (SIM) to generate a Synchronization Resume Metadata (SRM) for the MID |
+
+The name ADI refers to the Apple Device Information library (`CoreADI`), which must be loaded by `ADILoadLibraryWithPath` from the registry location specified in the `InstallDir` value of the `"HKEY_LOCAL_MACHINE\SOFTWARE\Apple Inc.\Apple Application Support` key. Both a WOW64 (x86) (`CoreADI.dll`) and native x64 (`CoreADI64.dll`) version exists. This library implements all of the required functionality described by the functions above.
+
+The export `cvu8io98wun` is used to obtain the initial version and protocol data, while `vdfut768ig` is the main worker function, which uses a `__fastcall` convention on x86 (`ECX:EDX` are the input arguments), or the regular x64 ABI.
+
+The legacy implementation of Anisette returned per-DSID information in a manual fashion, and almost each of these API required the DSID of the user. The newer implementations are DSID-agnostic, and instead require an Environment ID. The following 4 are defined:
+
+| Environment | Value | Meaning | Endpoint URL Prefix |
+| --- | --- |  --- |
+| IdMS | `-2` | Production | https://gsa |
+| IdMS1 | `-3` | User Acceptance Testing (UAT) | https://grandslam-uat |
+| IdMS2 | `-4` | QA | https://grandslam-it |
+| IdMS3 | `-5` | QA2 | https://grandslam-it3 |
+
+Note that `CoreADI` is heavily obfuscated with the FairPlay DRM technology. As this technology is used to secure commercially-sensitive data (subscriptions, payments, licensing) that is outside the scope of the interoperability research shown here, no additional details on how FairPlay can be bypassed will be explained here.
+
+#### Common `ADI` Header
+
+Apart from having a magic number in the first argument (ECX) of every Anisette request to CoreADI, a common structure is used to describe the request:
+
+| Field | Meaning |
+| --- | --- |  --- |
+| Arguments | Pointer to the arguments block |
+| Input Size | Number of bytes worth of input arguments |
+| Output Size | Number of bytes that the output needs  |
+| ... | ... | 
+| Flags | Specifies how the data is encoded |
+
+#### `ADIGetIDMSRouting`
+
+| Field | Value |
+| --- | --- |  --- |
+| Magic | `0x632b8d6e` |
+| Environment | The environment ID to use |
+| pRoutingInfo | Pointer to the output variable |
+
+#### `ADISetIDMSRouting`
+
+| Field | Value |
+| --- | --- |  --- |
+| Magic | `0x85fe63b0` |
 
 ## Credits / Thanks
 
+In terms of understanding `SRP-6a`, beyond the official RFC and Standford paper, the following people's projects greatly helped.
 
+* Tom Cocagne for the excellent (`CSRP`)[https://github.com/cocagne/csrp/] implementation. It has its issues but was great to learn from.
+* "est21" who made some bug-fixes and ported (it)[https://github.com/est31/csrp-gmp/] to `GMP` (not relevant here). Also with some differences from Apple but great to learn from.
+
+`SRP-6a`, like most crypto algorithms, needs a good big integer library, and `OpenSSL`/`GMP` are too heavy for our needs here. There are 1000 libraries you can find on GitHub, but none are so well documented, written, tested, efficient, and a wonder to use as David Ireland's (`BigDigits`)[https://www.di-mgt.com.au/bigdigits.html]. The implementation of `asrplib` here uses a micro version of BigDigits with only the 6 operations needed.
+
+To actually figure out how Apple's `SRP-6a` implementation is slightly tweaked, both network packet analysis as well as some other projects and presentations were analysed. Three deserve a callout:
+
+* Riley Testut for his (AltSign)[https://github.com/rileytestut/AltSign] project. Riley seems to have reverse-engineered much of the Objective-C code used in the original GSA2 authentication library (`AuthKit` and `akd`) and following this code was sometimes easier than looking at network packets. This work appears to have been based on original code from (Kabir Oberai)[https://github.com/kabiroberai].
+* Matt Clarke for this (ReProvision)[https://github.com/Matchstic/ReProvision] project. Matt adapted some code from Kabir as well, and provided a second pair of eyes to compare with Riley.
+* Vladimir Katalov, the CEO of ElcomSoft, who of course has lots of "forensic" tools for grabbing data authenticated through GSA. To his credit, he gave a pretty detailed (presentation)[https://sector.ca/wp-content/uploads/presentations17/vladimir-Katalov-iCloud_Keychain-(Katalov).pdf] on the internals of the protocol, which was not a vendor pitch!
 
 ## Usage
 
 This library was developed for research and educational purposes as a personal project to better understand cryptography and modern authentication protocols. Every acronym in this library was new to me at the time of development, and as such, there are likely subtle bugs in the implementation that may arise in corner cases. Additionally, there are a number of subtle naming puns scattered throughout (including, incidentally, the very name of the library).
+
+There are obviously mainly potential uses for authenticating with GSA outside of the standard supported tools. My own interest was API automation of certain utilities for personal use, but, as the linked projects above suggest, this capability can also be used for alternative stores/side-loading, "forensics", and more. I do not condone or support any specific use for this library, and instead want to offer a repository of knowledge instead of the 3 random pieces of Objective-C floating around.
