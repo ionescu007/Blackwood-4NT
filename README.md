@@ -319,8 +319,8 @@ Anisette supports the following commands which are relevant to GSA. The `pastis`
 | `dispose` | `ADIDispose` | Frees any buffers allocated by CoreADI on its heap |
 | `isMachineProvisioned` | `ADIGetLoginCode` | Returns whether or not provisioning information was cached on the machine |
 | `startProvisioning` | `ADIProvisioningStart` | Consumes the Server Provisioning Intermediate Metadata (SPIM) to return a Client PIM (CPIM) and session ID |
-| `endProvisioning` | | `ADIProvisioningEnd` | Accepts the server's Persistent Token Metadata (PTM) and Trust Key (TK) and writes provisioning data to disk |
-| `destroyProvisioningSession` | | `ADIProvisioningDestroy` | Accepts a previously returned session ID to complete (or abort) a provisoning operation |
+| `endProvisioning` | `ADIProvisioningEnd` | Accepts the server's Persistent Token Metadata (PTM) and Trust Key (TK) and writes provisioning data to disk |
+| `destroyProvisioningSession` | `ADIProvisioningDestroy` | Accepts a previously returned session ID to complete (or abort) a provisoning operation |
 | `eraseProvisioning` | `ADIProvisioningErase` | Erases provisoned data from disk and restores back to provisioned state |
 | `synchronize` | `ADISynchronize` | Consumes the Server Intermediate Metadata (SIM) to generate a Synchronization Resume Metadata (SRM) for the MID |
 
