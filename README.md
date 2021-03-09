@@ -346,7 +346,7 @@ Note that `CoreADI` is heavily obfuscated with the FairPlay DRM technology. As t
 Apart from having a magic number in the first argument (ECX) of every Anisette request to CoreADI, a common structure is used to describe the request:
 
 | Field | Meaning |
-| --- | --- |  --- |
+| --- | --- | 
 | Arguments | Pointer to the arguments block |
 | Input Size | Number of bytes worth of input arguments |
 | Output Size | Number of bytes that the output needs  |
@@ -356,7 +356,7 @@ Apart from having a magic number in the first argument (ECX) of every Anisette r
 #### `ADIGetIDMSRouting`
 
 | Field | Value |
-| --- | --- |  --- |
+| --- | --- | 
 | Magic | `0x632b8d6e` |
 | Environment | The environment ID to use |
 | pRoutingInfo | Pointer to the output variable |
@@ -364,7 +364,7 @@ Apart from having a magic number in the first argument (ECX) of every Anisette r
 #### `ADISetIDMSRouting`
 
 | Field | Value |
-| --- | --- |  --- |
+| --- | --- | 
 | Magic | `0x85fe63b0` |
 
 ## Credits / Thanks
